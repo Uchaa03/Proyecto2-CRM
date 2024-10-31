@@ -197,12 +197,10 @@ También tenemos que controlar el manejo de las transacciones:
 ````
 
 #### Eliminación de datos
-
 ````javascript
-    let request = db
-    .transaction(["customers"], "readwrite") //Selección de tipo de transacción y alamcen
-    .objectStore("customers") //Sekeciión de objeto concreto a modificar
-    .delete("444-44-4444"); //Le pasamos el keyPath a borrar
+    let request = db.transaction("customers", "readwrite") //Selección de tipo de transacción y alamcen
+    let obejctStore = tansaction.objectStore("customers") //Selección de objeto concreto a modificar
+    let request = obejctStore.delete("444-44-4444"); //Le pasamos el keyPath a borrar
     request.onsuccess = (e) => {
     // Si esta bien el elmento se habra borrado
 };
@@ -222,6 +220,42 @@ También tenemos que controlar el manejo de las transacciones:
     };
 ````
 
+#### Obtener todos los datos de un objeto con un cursor
+````javascript
+    // Abre una transacción en modo solo lectura ("readonly") solo queremos mostrar datos
+    let transaction = db.transaction("customers", "readonly");
+    
+    // Obtiene el object store "clientes" de la transacción
+    let objectStore = transaction.objectStore("customers");
+    
+    // Abre un cursor sobre la object store para iterar sobre los registros
+    let request = objectStore.openCursor();
+
+    // Maneja el evento onsuccess cuando el cursor se abre correctamente
+    request.onsuccess = (e) => {
+        // Obtiene el cursor de los resultados del evento
+        let cursor = e.target.result;
+        
+        // Verifica si el cursor tiene un registro válido
+        if (cursor) {
+            // Manejo del muestreo de clientes 
+                        
+            // Continúa al siguiente registro del cursor
+            cursor.continue();
+        }
+        // Si no tiene registros podemos mostrar un mensaje 
+
+    };
+
+    // Maneja el evento onerror si ocurre un error al abrir el cursor
+    request.onerror = (e) => {
+        // Manejar un error
+    }
+````
+Esta funcionalidad es muy útil ya, que es similar a un foreach pero utilizando la gestión de la base de datos cursor 
+clasico de base de datos básicamente.
+
 En principio con esto sería suficiente para poder utilizar 
 
 [Mozzila Web Docs - IndexedDB - Referencia utilizada](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API)
+[Mozzila Web Docs - IndexedDB Cursors - Referencia utilizada](https://developer.mozilla.org/es/docs/Web/API/IDBCursor)
