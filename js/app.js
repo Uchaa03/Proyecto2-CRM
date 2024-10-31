@@ -18,6 +18,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (tBody){ //If stay in show clients
             getClients()
         }
+        if (h2 === "Editar Cliente"){ //If stay in edit client
+           editClient()
+        }
     }
 
     //Update database for create initial structure
@@ -39,6 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const company = document.querySelector("#empresa")
     const inputSubmit = document.querySelector('#formulario input[type="submit"]')
     const tBody = document.querySelector("#listado-clientes")
+    const h2 = document.querySelector("h2").textContent
 
     //Local variables
     const errorBox = document.createElement("div")
@@ -54,7 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     //Object to check validatión and submit
-    const clientObject = { //These variables are necessary in spanish because de inputs are in spanish
+    let clientObject = { //These variables are necessary in spanish because de inputs are in spanish
         nombre: "",
         email: "",
         telefono: "",
@@ -67,7 +71,8 @@ document.addEventListener('DOMContentLoaded', () => {
         mail.onblur = (e) => validateContent(e)
         numberPhone.onblur = (e) => validateContent(e)
         company.onblur = (e) => validateContent(e)
-        inputSubmit.onclick = (e) => submitClient(e)
+        //Check input Creating client or edit client
+        inputSubmit.onclick = (e) => inputSubmit.value === "Guardar Cambios"? putClient(e):submitClient(e)
         resetValues()
         validateSubmit() //For disable inputSubmit to start
     }
@@ -253,7 +258,7 @@ document.addEventListener('DOMContentLoaded', () => {
             btnEdit.classList.add("bg-yellow-500", "hover:bg-yellow-600",
                                 "text-white", "font-bold",
                                 "py-2", "px-4", "rounded")
-            btnEdit.onclick = () => editClient(client.id)
+            btnEdit.onclick = () => editClientBtn(client.id)
 
             const btnDelete = document.createElement("button")
             btnDelete.textContent = "Eiminar"
@@ -273,8 +278,9 @@ document.addEventListener('DOMContentLoaded', () => {
         })
     }
 
-    function editClient(id) {
-
+    function editClientBtn(id) {
+        //Go to editar-cliente.html with id to edit
+        window.location.href = `editar-cliente.html?id=${id}`
     }
 
     //Select client selected and remove in database with a transaction
@@ -295,4 +301,63 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function editClient() {
+        let transaction = dataBase.transaction("clients", "readonly")
+        let objectStore = transaction.objectStore("clients")
+        let getRequest = objectStore.get(getIdClient())
+        getRequest.onsuccess = () => {
+            clientObject = getRequest.result
+            name.value = clientObject.name
+            mail.value = clientObject.mail
+            numberPhone.value = clientObject.numberPhone
+            company.value = clientObject.company
+        }
+        getRequest.onerror = () => {
+            console.error("No se a encontrado ningun cliente")
+        }
+    }
+
+    function getIdClient() {
+        const params = new URLSearchParams(window.location.search)
+        return  parseInt(params.get('id')) //Get id to edit
+    }
+
+    function putClient(e) {
+        e.preventDefault()
+        //Transaction in database clients
+        let transaction = dataBase.transaction("clients", "readwrite")
+        let objectStore = transaction.objectStore("clients")
+        const clientId = getIdClient()
+        //Get actual id tu edit
+        const getRequest = objectStore.get(clientId)
+
+        getRequest.onsuccess = () => {
+            const existingClient = getRequest.result
+
+            // Create an updated object that merges existing values with the updated ones
+            const updatedClient = {
+                id: clientId,
+                name: clientObject.nombre || existingClient.name, // Keep existing if not updated
+                mail: clientObject.email.toLowerCase() || existingClient.mail.toLowerCase(),
+                numberPhone: clientObject.telefono || existingClient.numberPhone,
+                company: clientObject.empresa || existingClient.company
+            }
+
+            const putRequest = objectStore.put(updatedClient)
+
+            putRequest.onsuccess = () => {
+                okMessage("Cliente Editado Correctamente", inputSubmit.parentElement)
+                // Optionally, redirect or reset fields here
+            }
+
+            putRequest.onerror = () => {
+                errorMessage("El télefono o correo ya fueron utilizados", inputSubmit.parentElement);
+                resetValues();
+            }
+        }
+
+        getRequest.onerror = () => {
+            errorMessage("No se pudo encontrar el cliente para editar", inputSubmit.parentElement);
+        }
+    }
 })

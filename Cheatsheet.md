@@ -255,7 +255,35 @@ También tenemos que controlar el manejo de las transacciones:
 Esta funcionalidad es muy útil ya, que es similar a un foreach pero utilizando la gestión de la base de datos cursor 
 clasico de base de datos básicamente.
 
-En principio con esto sería suficiente para poder utilizar 
+### Función de edición en indexed db 
+````javascript
+const title = "Walk dog";
+//Abrimos una transacción
+const objectStore = db
+  .transaction(["toDoList"], "readwrite")
+  .objectStore("toDoList");
+
+//Recogemos el elemento que queremos modificar
+const objectStoreTitleRequest = objectStore.get(title);
+
+objectStoreTitleRequest.onsuccess = () => {
+    //Recogemos el valor que queremos modificar
+  const data = objectStoreTitleRequest.result;
+
+    //Modificamos el valor
+  data.notified = "yes";
+
+    //Lo subimos con put
+  const updateTitleRequest = objectStore.put(data);
+
+    //Manejo de transacción realizada
+  updateTitleRequest.onsuccess = () => {
+    displayData();
+  };
+};
+````
+
+En principio con esto sería suficiente para poder utilizar indexedDB
 
 [Mozzila Web Docs - IndexedDB - Referencia utilizada](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API)
 [Mozzila Web Docs - IndexedDB Cursors - Referencia utilizada](https://developer.mozilla.org/es/docs/Web/API/IDBCursor)
