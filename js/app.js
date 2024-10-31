@@ -337,27 +337,27 @@ document.addEventListener('DOMContentLoaded', () => {
             // Create an updated object that merges existing values with the updated ones
             const updatedClient = {
                 id: clientId,
-                name: clientObject.nombre || existingClient.name, // Keep existing if not updated
-                mail: clientObject.email.toLowerCase() || existingClient.mail.toLowerCase(),
-                numberPhone: clientObject.telefono || existingClient.numberPhone,
-                company: clientObject.empresa || existingClient.company
+                name: existingClient.name, // Keep existing if not updated
+                mail: existingClient.mail.toLowerCase(),
+                numberPhone: existingClient.numberPhone,
+                company: existingClient.company
             }
 
             const putRequest = objectStore.put(updatedClient)
 
             putRequest.onsuccess = () => {
                 okMessage("Cliente Editado Correctamente", inputSubmit.parentElement)
-                // Optionally, redirect or reset fields here
+                window.location.href = `index.html`
             }
 
             putRequest.onerror = () => {
-                errorMessage("El télefono o correo ya fueron utilizados", inputSubmit.parentElement);
-                resetValues();
+                errorMessage("El télefono o correo ya fueron utilizados", inputSubmit.parentElement)
+                resetValues()
             }
         }
 
         getRequest.onerror = () => {
-            errorMessage("No se pudo encontrar el cliente para editar", inputSubmit.parentElement);
+            errorMessage("No se pudo encontrar el cliente para editar", inputSubmit.parentElement)
         }
     }
 })
