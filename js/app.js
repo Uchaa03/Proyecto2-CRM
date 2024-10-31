@@ -1,5 +1,31 @@
+//Configuration of database
+if (!window.indexedDB) { //Validate compatibility of indecedDB
+    window.alert("Su Navegador No es compatible con IndexedDB");
+}
+
+let dataBase //Variable for work with database
+let objectStore //For work with the object in database
+
+//Create a request to open database
+let request = indexedDB.open("CRM_Database", 1)
+
+//Control of request
+request.onerror = () => alert(`Error creando la base de datos`)
+request.onsuccess = () => console.log(`Base de datos creada con exito`)
+//Update database for create initial structure
+request.onupgradeneeded = (e) => {
+    dataBase = e.target.result //Save database created in value for work
+
+    //Configuration of the objectStore
+    objectStore = dataBase.createObjectStore("clients",{keyPath: "id", autoIncrement: true})
+
+    //Declaration unique values
+    objectStore.createIndex("email", "email", { unique: true });
+    objectStore.createIndex("telefono", "telefono", { unique: true });
+}
 
 
+//App functions
 document.addEventListener('DOMContentLoaded', () => {
     //Selectors
     const name = document.querySelector("#nombre")
