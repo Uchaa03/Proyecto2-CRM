@@ -1,22 +1,23 @@
 document.addEventListener('DOMContentLoaded', () => {
     //Configuration of database
-    if (!window.indexedDB) { //Validate compatibility of indecedDB
+    if (!window.indexedDB) { //Validate compatibility of indexedDB
         window.alert("Su Navegador No es compatible con IndexedDB");
     }
 
     let dataBase //Variable for work with database
     let objectStore //For work with the object in database
 
-//Create a request to open database
+    //Create a request to open database
     let request = indexedDB.open("CRM_Database", 1)
 
-//Control of request
+    //Control of request
     request.onerror = () => alert(`Error creando la base de datos`)
     request.onsuccess = (e) => {
         dataBase = e.target.result
         console.log(`Base de datos creada con exito`)
     }
-//Update database for create initial structure
+
+    //Update database for create initial structure
     request.onupgradeneeded = (e) => {
         dataBase = e.target.result //Save database created in value for work
 
@@ -34,6 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const numberPhone = document.querySelector("#telefono")
     const company = document.querySelector("#empresa")
     const inputSubmit = document.querySelector('#formulario input[type="submit"]')
+    const tBody = document.querySelector("tbody")
 
     //Local variables
     const errorBox = document.createElement("div")
@@ -46,14 +48,6 @@ document.addEventListener('DOMContentLoaded', () => {
         numberPhone.value = ""
         company.value = ""
     }
-    resetValues()
-
-    //Listeners
-    name.onblur = (e) => validateContent(e)
-    mail.onblur = (e) => validateContent(e)
-    numberPhone.onblur = (e) => validateContent(e)
-    company.onblur = (e) => validateContent(e)
-    inputSubmit.onclick = (e) => submitClient(e)
 
     //Object to check validatión and submit
     const clientObject = { //These variables are necessary in spanish because de inputs are in spanish
@@ -62,7 +56,17 @@ document.addEventListener('DOMContentLoaded', () => {
         telefono: "",
         empresa: "",
     }
-    validateSubmit() //For disable inputSubmit to start
+
+    //Listeners
+    if (inputSubmit) { //Validate the correct page
+        name.onblur = (e) => validateContent(e)
+        mail.onblur = (e) => validateContent(e)
+        numberPhone.onblur = (e) => validateContent(e)
+        company.onblur = (e) => validateContent(e)
+        inputSubmit.onclick = (e) => submitClient(e)
+        resetValues()
+        validateSubmit() //For disable inputSubmit to start
+    }
 
     //Validation for inputs
     function validateContent(e) {
@@ -189,5 +193,10 @@ document.addEventListener('DOMContentLoaded', () => {
             errorMessage("El télefono o correo ya fueron utilizados", inputSubmit.parentElement)
             resetValues()
         }
+    }
+
+    //Show Clients Functions
+    if (tBody){ //If stay in show clients
+
     }
 })
