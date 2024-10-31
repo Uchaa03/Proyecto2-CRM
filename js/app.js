@@ -1,47 +1,49 @@
-//Configuration of database
-if (!window.indexedDB) { //Validate compatibility of indecedDB
-    window.alert("Su Navegador No es compatible con IndexedDB");
-}
+document.addEventListener('DOMContentLoaded', () => {
+    //Configuration of database
+    if (!window.indexedDB) { //Validate compatibility of indecedDB
+        window.alert("Su Navegador No es compatible con IndexedDB");
+    }
 
-let dataBase //Variable for work with database
-let objectStore //For work with the object in database
+    let dataBase //Variable for work with database
+    let objectStore //For work with the object in database
 
 //Create a request to open database
-let request = indexedDB.open("CRM_Database", 1)
+    let request = indexedDB.open("CRM_Database", 1)
 
 //Control of request
-request.onerror = () => alert(`Error creando la base de datos`)
-request.onsuccess = () => console.log(`Base de datos creada con exito`)
+    request.onerror = () => alert(`Error creando la base de datos`)
+    request.onsuccess = (e) => {
+        dataBase = e.target.result
+        console.log(`Base de datos creada con exito`)
+    }
 //Update database for create initial structure
-request.onupgradeneeded = (e) => {
-    dataBase = e.target.result //Save database created in value for work
+    request.onupgradeneeded = (e) => {
+        dataBase = e.target.result //Save database created in value for work
 
-    //Configuration of the objectStore
-    objectStore = dataBase.createObjectStore("clients",{keyPath: "id", autoIncrement: true})
+        //Configuration of the objectStore
+        objectStore = dataBase.createObjectStore("clients",{keyPath: "id", autoIncrement: true})
 
-    //Declaration unique values
-    objectStore.createIndex("email", "email", { unique: true });
-    objectStore.createIndex("telefono", "telefono", { unique: true });
-}
+        //Declaration unique values
+        objectStore.createIndex("mail", "mail", { unique: true });
+        objectStore.createIndex("numberPhone", "numberPhone", { unique: true });
+    }
 
-
-//App functions
-document.addEventListener('DOMContentLoaded', () => {
     //Selectors
     const name = document.querySelector("#nombre")
     const mail = document.querySelector("#email")
-    const tlf = document.querySelector("#telefono")
+    const numberPhone = document.querySelector("#telefono")
     const company = document.querySelector("#empresa")
     const inputSubmit = document.querySelector('#formulario input[type="submit"]')
 
     //Local variables
     const errorBox = document.createElement("div")
+    const submitMessage = document.createElement("div")
 
     //When reload app, reset inputs
     function resetValues() {
         name.value = ""
         mail.value = ""
-        tlf.value = ""
+        numberPhone.value = ""
         company.value = ""
     }
     resetValues()
@@ -49,7 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
     //Listeners
     name.onblur = (e) => validateContent(e)
     mail.onblur = (e) => validateContent(e)
-    tlf.onblur = (e) => validateContent(e)
+    numberPhone.onblur = (e) => validateContent(e)
     company.onblur = (e) => validateContent(e)
     inputSubmit.onclick = (e) => submitClient(e)
 
@@ -68,33 +70,28 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target.value.trim() === "") {
             //Show an error message, put in parentElement
             errorMessage("El valor no puede estar vacío", e.target.parentElement)
-            removeBox()
             return
         }
         //Validation for name
         if (e.target.id === "nombre" && !validateName(e.target.value.trim())) {
             errorMessage("El nombre no es válido", e.target.parentElement)
-            removeBox()
             clientObject[e.target.name] = ""
             return
         }
         //Validation for mail
         if (e.target.id === "email" && !validateMail(e.target.value.trim())) {
             errorMessage("El correo no es válido", e.target.parentElement)
-            removeBox()
             clientObject[e.target.name] = ""
             return
         }
-        //Validation for tlf
+        //Validation for numberPhone
         if (e.target.id === "telefono" && !validateTlf(e.target.value.trim())) {
             errorMessage("El teléfono no es válido", e.target.parentElement)
-            removeBox()
             return
         }
         //Validation for company
         if (e.target.id === "empresa" && !validateCompany(e.target.value.trim())) {
             errorMessage("La empresa no es válida", e.target.parentElement)
-            removeBox()
             return
         }
         //If the values pass validations, change de statement of button
@@ -144,6 +141,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 "rounded-md")
         errorBox.textContent = message
         parentElement.appendChild(errorBox)
+        removeBox()
+    }
+
+    //For show a message when the client was added correctly
+    function okMessage(message, parentElement) {
+        //Add classes for create a box with styles
+        submitMessage.classList
+            .add("bg-green-600",
+                "text-center",
+                "text-white",
+                "p-2",
+                "font-bold")
+        submitMessage.textContent = message
+        parentElement.appendChild(submitMessage)
+        setTimeout(()=> {
+            submitMessage.remove()
+        },3000)
     }
 
     //Delete error box and update de validation submit in a function factorized
@@ -157,11 +171,23 @@ document.addEventListener('DOMContentLoaded', () => {
     //Submit Client to database
     function submitClient(e) {
         e.preventDefault()
-        console.log("Cliente enviado correctamente")
-        console.log(`Nombre: ${clientObject.nombre}`)
-        console.log(`Email: ${clientObject.email.trim()}`)
-        console.log(`Tlf: ${clientObject.telefono}`)
-        console.log(`Empresa: ${clientObject.empresa}`)
-        resetValues()
+        //Transaction in database clients
+        let transaction = dataBase.transaction("clients", "readwrite");
+        let objectStore = transaction.objectStore("clients");
+        request = objectStore.add({
+            name: clientObject.nombre,
+            mail: clientObject.email.toLowerCase(), //Mails must be in lowercase
+            numberPhone: clientObject.telefono,
+            company: clientObject.empresa
+        })
+        request.onsuccess = () => {
+            okMessage("Cliente Agregado Correctamente", inputSubmit.parentElement)
+            resetValues()
+        }
+
+        request.onerror = () => {
+            errorMessage("El télefono o correo ya fueron utilizados", inputSubmit.parentElement)
+            resetValues()
+        }
     }
 })
